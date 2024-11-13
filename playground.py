@@ -1,86 +1,49 @@
-class SparseArray:
-    def __init__(self, values):
-        self._data = {}  # Store non-zero values in a dictionary
-        self._length = len(values)  # The total length of the array
-        
-        # Initialize the array with non-zero values
-        for index, value in enumerate(values):
-            if value != 0:
-                self._data[index] = value
+class Sparse2DArray:
+    def __init__(self, rows, cols, values=None):
+        self._data = {}  # Dictionary to store non-zero values
+        self._rows = rows
+        self._cols = cols
+
+        # Initialize with given values (a 2D list), if provided
+        if values:
+            for row in range(rows):
+                for col in range(cols):
+                    if values[row][col] != 0:
+                        self._data[(row, col)] = values[row][col]
 
     def __len__(self):
-        return self._length
+        return self._rows * self._cols
 
     def __getitem__(self, index):
-        if index >= self._length or index < 0:
-            raise IndexError("Index out of range")
-        
-        return self._data.get(index, 0)  # Return 0 if index not found
+        if isinstance(index, tuple):
+            row, col = index
+            if row >= self._rows or col >= self._cols:
+                raise IndexError("Index out of range")
+            return self._data.get((row, col), 0)
+        else:
+            raise TypeError("Index should be a tuple of (row, col)")
 
     def __setitem__(self, index, value):
-        if index >= self._length or index < 0:
+        row, col = index
+        if row >= self._rows or col >= self._cols:
             raise IndexError("Index out of range")
-        
         if value != 0:
-            self._data[index] = value
-        elif index in self._data:
-            del self._data[index]  # Remove the key if we're setting it to 0
-
-    def __delitem__(self, index):
-        if index >= self._length or index < 0:
-            raise IndexError("Index out of range")
-        
-        # Remove the value at the index (if present), and shift all items to the left
-        if index in self._data:
-            del self._data[index]
-        
-        # Shift all elements after the deleted one
-        keys_to_update = [k for k in self._data.keys() if k > index]
-        for key in keys_to_update:
-            self._data[key - 1] = self._data.pop(key)
-        
-        # Decrease the virtual length
-        self._length -= 1
-
-    def append(self, value):
-        if value != 0:
-            self._data[self._length] = value
-        self._length += 1
-
-    def __contains__(self, value):
-        # Check if value exists in the sparse array
-        return value == 0 or value in self._data.values()
-
-    def __add__(self, other):
-        if not isinstance(other, SparseArray):
-            raise ValueError("Can only concatenate with another SparseArray")
-        
-        new_values = [self[i] for i in range(self._length)] + [other[i] for i in range(len(other))]
-        return SparseArray(new_values)
-
-    def __lt__(self, other):
-        if not isinstance(other, SparseArray):
-            return NotImplemented
-        return len(self) < len(other)
-
-    def __gt__(self, other):
-        if not isinstance(other, SparseArray):
-            return NotImplemented
-        return len(self) > len(other)
-
-    def __eq__(self, other):
-        if not isinstance(other, SparseArray):
-            return NotImplemented
-        return len(self) == len(other)
+            self._data[(row, col)] = value
+        elif (row, col) in self._data:
+            del self._data[(row, col)]
 
     def __str__(self):
-        return str([self[i] for i in range(self._length)])
+        result = []
+        for row in range(self._rows):
+            current_row = []
+            for col in range(self._cols):
+                current_row.append(self._data.get((row, col), 0))
+            result.append(current_row)
+        return str(result)
 
-# Example Usage
-my_array = SparseArray([0, 7, 0, 5, 0, 6, 0, 0, 0, 4, 13, 0, 0])
-print(len(my_array))  # Should print 13
-print(my_array[3])    # Should print 5
-del my_array[0]
-print(my_array[0])    # Should print 7
-my_array.append(10)
-print(my_array)  # Should print [7, 0, 5, 0, 6, 0, 0, 0, 4, 13, 0, 0, 10]
+# Example usage of 2D SparseArray:
+sparse_2d = Sparse2DArray(3, 3, [[0, 1, 0], [0, 0, 0], [3, 0, 0]])
+print(sparse_2d)  # Should print a 3x3 grid
+print(sparse_2d[0, 1])  # Should print 1
+sparse_2d[2, 0] = 0  # Remove the non-zero value
+print(sparse_2d)  # Should print the updated grid
